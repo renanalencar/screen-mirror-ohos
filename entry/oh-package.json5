@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "手机投屏",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "ohos_webrtc": "file:../ohos_webrtc"
+  }
+}

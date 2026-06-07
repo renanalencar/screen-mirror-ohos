@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手机投屏 - PC 接收端</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    body { font-family: 'Segoe UI', sans-serif; }
+
+    #video-container {
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #000;
+    }
+    video {
+      object-fit: contain;
+      background: #000;
+      transition: transform 0.3s ease;
+    }
+    video.normal { width: 100%; height: 100%; }
+    video.rotated {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 100vh; height: 100vw;
+      max-width: none; max-height: none;
+    }
+
+    #status-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 8px 16px; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      color: #fff; font-size: 14px;
+      transition: opacity 0.3s;
+    }
+    #status-bar.hide { opacity: 0; pointer-events: none; }
+
+    #status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+    #status-dot.waiting  { background: #ffc107; }
+    #status-dot.connected { background: #53d769; }
+    #status-dot.disconnected { background: #e74c3c; }
+
+    #controls { display: flex; gap: 12px; }
+    #controls button {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff; padding: 4px 12px; border-radius: 4px;
+      cursor: pointer; font-size: 12px; transition: background 0.2s;
+    }
+    #controls button:hover { background: rgba(255,255,255,0.3); }
+    #controls button.active { background: rgba(83,215,105,0.3); border-color: #53d769; }
+
+    body.fullscreen #status-bar {
+      top: auto; bottom: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    }
+
+    #overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #fff; z-index: 5;
+      background: rgba(0,0,0,0.6); transition: opacity 0.5s;
+    }
+    #overlay.hidden { opacity: 0; pointer-events: none; }
+    #overlay h1 { font-size: 32px; margin-bottom: 12px; }
+    #overlay p { color: #aaa; font-size: 14px; }
+
+    #hint {
+      position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.5); font-size: 12px; z-index: 8;
+      transition: opacity 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div id="status-bar" class="hide">
+    <span><span id="status-dot"></span><span id="status-text">等待连接</span></span>
+    <span id="controls">
+      <button id="btn-fill">⊡ 撑满</button>
+      <button id="btn-rotate">↻ 旋转</button>
+      <button id="btn-fullscreen">⛶ 全屏</button>
+    </span>
+  </div>
+  <div id="video-container"><video id="remoteVideo" autoplay playsinline muted></video></div>
+  <div id="overlay"><h1>📱 等待手机连接...</h1><p>请确保手机已打开投屏 App</p></div>
+  <div id="hint">双击全屏 · F 全屏 · R 旋转 · C 撑满</div>
+
+  <script>
+    const SIGNALING_URL = "ws://localhost:8080";
+    const videoEl = document.getElementById("remoteVideo");
+    const overlay = document.getElementById("overlay");
+    const hint = document.getElementById("hint");
+    const statusBar = document.getElementById("status-bar");
+    const statusDot = document.getElementById("status-dot");
+    const statusText = document.getElementById("status-text");
+    const btnFullscreen = document.getElementById("btn-fullscreen");
+    const btnFill = document.getElementById("btn-fill");
+    const btnRotate = document.getElementById("btn-rotate");
+
+    let pc = null, ws = null, hideTimer = null;
+    let fillMode = false, rotation = 0;
+
+    function log(msg) { console.log(`[${new Date().toLocaleTimeString()}]`, msg); }
+
+    function updateStatus(dotClass, text) {
+      statusDot.className = dotClass;
+      statusText.textContent = text;
+      statusBar.classList.remove("hide");
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => statusBar.classList.add("hide"), 3000);
+    }
+
+    document.addEventListener("mousemove", () => { if (videoEl.srcObject) updateStatus(statusDot.className, statusText.textContent); });
+
+    // ===== 全屏 =====
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) document.body.requestFullscreen().then(() => document.body.classList.add("fullscreen")).catch(() => {});
+      else document.exitFullscreen().then(() => document.body.classList.remove("fullscreen"));
+    }
+
+    // ===== 撑满 =====
+    function applyFill() {
+      videoEl.style.objectFit = fillMode ? "cover" : "contain";
+      btnFill.textContent = fillMode ? "⊡ 自适应" : "⊡ 撑满";
+      btnFill.classList.toggle("active", fillMode);
+    }
+
+    // ===== 旋转 =====
+    function applyRotation() {
+      const on = rotation % 180 !== 0;
+      videoEl.classList.toggle("rotated", on);
+      videoEl.classList.toggle("normal", !on);
+      videoEl.style.transform = on ? `translate(-50%, -50%) rotate(${rotation}deg)` : "";
+    }
+
+    btnFullscreen.addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement) document.body.classList.remove("fullscreen");
+    });
+
+    btnFill.addEventListener("click", () => { fillMode = !fillMode; applyFill(); });
+
+    btnRotate.addEventListener("click", () => { rotation = (rotation + 90) % 360; applyRotation(); });
+
+    videoEl.addEventListener("dblclick", toggleFullscreen);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "f" || e.key === "F") toggleFullscreen();
+      if (e.key === "r" || e.key === "R") btnRotate.click();
+      if (e.key === "c" || e.key === "C") btnFill.click();
+    });
+
+    // ===== 信令 =====
+    function connectSignaling() {
+      ws = new WebSocket(SIGNALING_URL);
+      ws.onopen = () => updateStatus("waiting", "等待手机配对...");
+      ws.onmessage = async (e) => {
+        const msg = JSON.parse(e.data);
+        switch (msg.type) {
+          case "offer": await handleOffer(msg); break;
+          case "ice-candidate":
+            if (pc && msg.candidate) await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); break;
+          case "peer-disconnected":
+            overlay.classList.remove("hidden"); updateStatus("disconnected", "手机已断开"); break;
+        }
+      };
+      ws.onclose = () => { updateStatus("disconnected", "信令断开，5s重连"); setTimeout(connectSignaling, 5000); };
+      ws.onerror = () => updateStatus("disconnected", "信令连接失败");
+    }
+
+    async function handleOffer(msg) {
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        bundlePolicy: "max-bundle",
+        rtcpMuxPolicy: "require",
+      });
+      pc.ontrack = (event) => {
+        const rcv = event.receiver;
+        if (rcv && rcv.playoutDelayHint !== undefined) rcv.playoutDelayHint = 0.05;
+        videoEl.srcObject = event.streams[0];
+        overlay.classList.add("hidden");
+        hint.style.opacity = "0";
+        updateStatus("connected", "投屏中");
+      };
+      pc.onicecandidate = (event) => {
+        if (event.candidate && ws && ws.readyState === WebSocket.OPEN)
+          ws.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate.toJSON() }));
+      };
+      pc.oniceconnectionstatechange = () => {
+        log("ICE: " + pc.iceConnectionState);
+        if (pc.iceConnectionState === "connected") updateStatus("connected", "投屏中");
+        else if (pc.iceConnectionState === "disconnected") { updateStatus("disconnected", "画面中断"); overlay.classList.remove("hidden"); }
+        else if (pc.iceConnectionState === "failed") { updateStatus("disconnected", "连接失败"); overlay.classList.remove("hidden"); }
+      };
+      await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: msg.sdp }));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      ws.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
+    }
+
+    connectSignaling();
+  </script>
+</body>
+</html>

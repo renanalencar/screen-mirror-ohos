@@ -1,0 +1,16 @@
+{
+	"CommonInfo":{
+		"project.ide.version":"6.1.1.280",
+		"current.select.product":"default",
+		"current.select.buildMode":"",
+		"crossplatform.projectType":""
+	},
+	"BuildOptions":{
+		"SELECT_BUILD_PRODUCT":"default",
+		"BUNDLE_NAME":"com.example.screenmirror",
+		"BUILD_PATH":{
+			"OUTPUT_PATH":"C:\\Users\\16227\\Desktop\\ScreenMirror\\build\\outputs\\default"
+		},
+		"SELECT_BUILD_MODE":""
+	}
+}
