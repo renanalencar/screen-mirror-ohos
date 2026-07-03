@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>手机投屏 - PC 接收端</title>
+  <title>Screen Mirroring - PC Receiver</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
@@ -78,19 +78,19 @@
 </head>
 <body>
   <div id="status-bar" class="hide">
-    <span><span id="status-dot"></span><span id="status-text">等待连接</span></span>
+    <span><span id="status-dot"></span><span id="status-text">Waiting for connection</span></span>
     <span id="controls">
-      <button id="btn-fill">⊡ 撑满</button>
-      <button id="btn-rotate">↻ 旋转</button>
-      <button id="btn-fullscreen">⛶ 全屏</button>
+      <button id="btn-fill">⊡ Fill</button>
+      <button id="btn-rotate">↻ Rotate</button>
+      <button id="btn-fullscreen">⛶ Fullscreen</button>
     </span>
   </div>
   <div id="video-container"><video id="remoteVideo" autoplay playsinline muted></video></div>
-  <div id="overlay"><h1>📱 等待手机连接...</h1><p>请确保手机已打开投屏 App</p></div>
-  <div id="hint">双击全屏 · F 全屏 · R 旋转 · C 撑满</div>
+  <div id="overlay"><h1>📱 Waiting for mobile connection...</h1><p>Please ensure the mirroring App is open on your mobile device</p></div>
+  <div id="hint">Double-click Fullscreen · F Fullscreen · R Rotate · C Fill</div>
 
   <script>
-    const SIGNALING_URL = "ws://localhost:8080";
+    const SIGNALING_URL = "ws://localhost:8080/?role=receiver";
     const videoEl = document.getElementById("remoteVideo");
     const overlay = document.getElementById("overlay");
     const hint = document.getElementById("hint");
@@ -116,20 +116,20 @@
 
     document.addEventListener("mousemove", () => { if (videoEl.srcObject) updateStatus(statusDot.className, statusText.textContent); });
 
-    // ===== 全屏 =====
+    // ===== Fullscreen =====
     function toggleFullscreen() {
       if (!document.fullscreenElement) document.body.requestFullscreen().then(() => document.body.classList.add("fullscreen")).catch(() => {});
       else document.exitFullscreen().then(() => document.body.classList.remove("fullscreen"));
     }
 
-    // ===== 撑满 =====
+    // ===== Fill =====
     function applyFill() {
       videoEl.style.objectFit = fillMode ? "cover" : "contain";
-      btnFill.textContent = fillMode ? "⊡ 自适应" : "⊡ 撑满";
+      btnFill.textContent = fillMode ? "⊡ Adaptive" : "⊡ Fill";
       btnFill.classList.toggle("active", fillMode);
     }
 
-    // ===== 旋转 =====
+    // ===== Rotate =====
     function applyRotation() {
       const on = rotation % 180 !== 0;
       videoEl.classList.toggle("rotated", on);
@@ -153,10 +153,10 @@
       if (e.key === "c" || e.key === "C") btnFill.click();
     });
 
-    // ===== 信令 =====
+    // ===== Signaling =====
     function connectSignaling() {
       ws = new WebSocket(SIGNALING_URL);
-      ws.onopen = () => updateStatus("waiting", "等待手机配对...");
+      ws.onopen = () => updateStatus("waiting", "Waiting for mobile pairing...");
       ws.onmessage = async (e) => {
         const msg = JSON.parse(e.data);
         switch (msg.type) {
@@ -164,11 +164,11 @@
           case "ice-candidate":
             if (pc && msg.candidate) await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); break;
           case "peer-disconnected":
-            overlay.classList.remove("hidden"); updateStatus("disconnected", "手机已断开"); break;
+            overlay.classList.remove("hidden"); updateStatus("disconnected", "Mobile disconnected"); break;
         }
       };
-      ws.onclose = () => { updateStatus("disconnected", "信令断开，5s重连"); setTimeout(connectSignaling, 5000); };
-      ws.onerror = () => updateStatus("disconnected", "信令连接失败");
+      ws.onclose = () => { updateStatus("disconnected", "Signaling disconnected, reconnecting in 5s"); setTimeout(connectSignaling, 5000); };
+      ws.onerror = () => updateStatus("disconnected", "Signaling connection failed");
     }
 
     async function handleOffer(msg) {
@@ -183,7 +183,7 @@
         videoEl.srcObject = event.streams[0];
         overlay.classList.add("hidden");
         hint.style.opacity = "0";
-        updateStatus("connected", "投屏中");
+        updateStatus("connected", "Mirroring");
       };
       pc.onicecandidate = (event) => {
         if (event.candidate && ws && ws.readyState === WebSocket.OPEN)
@@ -191,9 +191,9 @@
       };
       pc.oniceconnectionstatechange = () => {
         log("ICE: " + pc.iceConnectionState);
-        if (pc.iceConnectionState === "connected") updateStatus("connected", "投屏中");
-        else if (pc.iceConnectionState === "disconnected") { updateStatus("disconnected", "画面中断"); overlay.classList.remove("hidden"); }
-        else if (pc.iceConnectionState === "failed") { updateStatus("disconnected", "连接失败"); overlay.classList.remove("hidden"); }
+        if (pc.iceConnectionState === "connected") updateStatus("connected", "Mirroring");
+        else if (pc.iceConnectionState === "disconnected") { updateStatus("disconnected", "Stream interrupted"); overlay.classList.remove("hidden"); }
+        else if (pc.iceConnectionState === "failed") { updateStatus("disconnected", "Connection failed"); overlay.classList.remove("hidden"); }
       };
       await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: msg.sdp }));
       const answer = await pc.createAnswer();

@@ -1,10 +1,10 @@
 /**
- * 最简 WebRTC 信令服务器
- * 用法: node server.js
- * 监听 ws://0.0.0.0:8080
+ * Minimal WebRTC Signaling Server
+ * Usage: node server.js
+ * Listening on ws://0.0.0.0:8080
  *
- * 自动配对前两个连接的客户端（一个手机 + 一个 PC），
- * 转发 offer / answer / ice-candidate。
+ * Automatically pairs the first two connected clients (one Mobile + one PC),
+ * forwards offer / answer / ice-candidate.
  */
 
 const WebSocket = require("ws");
@@ -12,29 +12,59 @@ const WebSocket = require("ws");
 const PORT = 8080;
 const wss = new WebSocket.Server({ port: PORT });
 
-console.log(`[信令服务器] 启动在 ws://0.0.0.0:${PORT}`);
+console.log(`[Signaling Server] Started on ws://0.0.0.0:${PORT}`);
 
-// 房间：只存两个客户端（手机=offer方, PC=answer方）
-let clients = []; // 最多两个 { ws, label }
+// Keep-alive heartbeat (prevents OpenHarmony client timeout) and removes dead connections
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      clients = clients.filter((c) => c.ws !== ws);
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 10000);
+
+// Room: only stores two clients (Mobile=offer side, PC=answer side)
+let clients = []; // Max two { ws, label }
 
 wss.on("connection", (ws, req) => {
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
+
   const ip = req.socket.remoteAddress;
-  console.log(`[连接] 新客户端: ${ip}`);
+  
+  // Parse role from query string
+  const url = new URL(req.url, 'http://localhost');
+  const role = url.searchParams.get("role");
+
+  // If a client with the same role already exists, replace it
+  if (role) {
+    const existing = clients.find(c => c.role === role);
+    if (existing) {
+      console.log(`[Role] Replacing old ${role}`);
+      existing.ws.close();
+      clients = clients.filter(c => c !== existing);
+    }
+  }
 
   if (clients.length >= 2) {
-    // 房间满了，拒绝新连接
-    ws.send(JSON.stringify({ type: "error", message: "房间已满" }));
+    // Room is full, reject new connection
+    ws.send(JSON.stringify({ type: "error", message: "Room is full" }));
     ws.close();
     return;
   }
 
-  clients.push({ ws, ip });
-  const myLabel = clients.length === 1 ? "手机(offer方)" : "PC(answer方)";
-  console.log(`[角色] ${ip} → ${myLabel}`);
+  clients.push({ ws, ip, role });
+  const myLabel = role === "sender" ? "Mobile(offer side)" : (role === "receiver" ? "PC(answer side)" : "Unknown");
+  console.log(`[Connection] New client: ${ip} → ${myLabel}`);
 
-  // 两人都到齐了，通知 PC 端准备接收
+  // Both arrived, notify PC side to prepare to receive
   if (clients.length === 2) {
-    console.log("[配对] 两个客户端已配对，准备信令交换");
+    console.log("[Pairing] Two clients paired, preparing for signaling exchange");
     clients.forEach((c) =>
       c.ws.send(JSON.stringify({ type: "ready", peers: clients.length }))
     );
@@ -43,31 +73,31 @@ wss.on("connection", (ws, req) => {
   ws.on("message", (data) => {
     try {
       const msg = JSON.parse(data.toString());
-      // 转发给另一个客户端
+      // Forward to the other client
       const other = clients.find((c) => c.ws !== ws);
       if (other && other.ws.readyState === WebSocket.OPEN) {
         other.ws.send(JSON.stringify(msg));
-        console.log(`[转发] ${msg.type}`);
+        console.log(`[Forward] ${msg.type}`);
       }
     } catch (e) {
-      console.warn("[非法消息]", data.toString().slice(0, 50));
+      console.warn("[Invalid Message]", data.toString().slice(0, 50));
     }
   });
 
   ws.on("close", () => {
-    console.log(`[断开] ${ip}`);
+    console.log(`[Disconnected] ${ip}`);
     clients = clients.filter((c) => c.ws !== ws);
-    // 通知剩余的人
+    // Notify the remaining client
     clients.forEach((c) =>
       c.ws.send(
-        JSON.stringify({ type: "peer-disconnected", message: "对方已断开" })
+        JSON.stringify({ type: "peer-disconnected", message: "Peer disconnected" })
       )
     );
   });
 
   ws.on("error", (err) => {
-    console.error(`[错误] ${ip}:`, err.message);
+    console.error(`[Error] ${ip}:`, err.message);
   });
 });
 
-console.log("[信令服务器] 等待客户端连接...");
+console.log("[Signaling Server] Waiting for clients to connect...");

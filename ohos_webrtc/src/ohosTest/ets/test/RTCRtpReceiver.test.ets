@@ -64,7 +64,7 @@ async function exchangeOffer(caller: webrtc.RTCPeerConnection, callee: webrtc.RT
 }
 
 async function exchangeAnswer(caller: webrtc.RTCPeerConnection, callee: webrtc.RTCPeerConnection) {
-  // 必须先执行caller.setRemoteDescription，否则callee的candidates有可能在caller的remote description设置之前到达
+  // Must call caller.setRemoteDescription first, otherwise callee's candidates might arrive before caller's remote description is set
   const answer = await callee.createAnswer();
   await caller.setRemoteDescription(answer);
   await callee.setLocalDescription(answer);
@@ -75,7 +75,7 @@ async function exchangeOfferAnswer(caller: webrtc.RTCPeerConnection, callee: web
   await exchangeAnswer(caller, callee);
 }
 
-// 等待pc.connectionState变为'connected'.
+// Wait for pc.connectionState to become 'connected'.
 async function listenToConnected(pc: webrtc.RTCPeerConnection) {
   while (pc.connectionState != 'connected') {
     await new Promise<webrtc.Event>((resolve) => {
@@ -87,7 +87,7 @@ async function listenToConnected(pc: webrtc.RTCPeerConnection) {
 
 async function waitForTrackUnmuted(_track: webrtc.MediaStreamTrack) {
   console.log(TAG, 'waitForTrackUnmuted');
-  // 暂未提供muted属性和onunmute事件等
+  // The muted property and onunmute event are not provided yet
   await helper.sleep(1000);
 }
 

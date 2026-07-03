@@ -1,22 +1,23 @@
 /**
- * 手机投屏 - 发送端页面 (OpenHarmony ArkTS)
+ * Screen Mirroring - Sender (OpenHarmony ArkTS)
  *
- * 前置条件：
- *   1. 信令服务器已启动 (ws://PC_IP:8080)
- *   2. PC 浏览器已打开接收页面 (web-receiver/index.html)
+ * Prerequisites:
+ *   1. Signaling server is running (ws://PC_IP:8080)
+ *   2. PC browser has the receiver page open (web-receiver/index.html)
  */
 
-import webrtc from 'ohos_webrtc'
+import webrtc from '@ohos/webrtc'
 import webSocket from '@ohos.net.webSocket'
 import { BusinessError } from '@ohos.base'
 import hilog from '@ohos.hilog'
 
 const TAG = 'ScreenMirror'
 
-// ====== 改成你电脑的局域网 IP (192.168.x.x) ======
-const SIGNALING_URL = 'ws://113.54.205.156:8080'
+// ====== Replace with your PC's local IP (192.168.x.x) ======
+// const SIGNALING_URL = 'ws://[IP_ADDRESS]'
+const SIGNALING_URL = 'ws://192.168.0.131:8080/?role=sender'
 
-// ====== 信令消息类型定义 ======
+// ====== Signaling message type definition ======
 interface SignalingMsg {
   type: string
   sdp?: string
@@ -42,7 +43,7 @@ const ICE_SERVERS: webrtc.RTCConfiguration = {
 @Entry
 @Component
 struct ScreenMirror {
-  @State statusText: string = '未连接'
+  @State statusText: string = 'Not Connected'
   @State isCasting: boolean = false
   @State connectionState: string = ''
 
@@ -52,52 +53,52 @@ struct ScreenMirror {
   private localStream: webrtc.MediaStream | null = null
 
   aboutToAppear(): void {
-    hilog.info(0x0000, TAG, '页面初始化')
+    hilog.info(0x0000, TAG, 'Page initialized')
   }
 
   /**
-   * 建立 WebSocket 信令连接
+   * Establish WebSocket signaling connection
    */
   async connectSignaling(): Promise<webSocket.WebSocket> {
     return new Promise((resolve, reject) => {
       const ws = webSocket.createWebSocket()
       ws.connect(SIGNALING_URL, (err: BusinessError, value: boolean) => {
         if (err) {
-          const msg: string = err.message || err.name || '连接超时'
-          hilog.error(0x0000, TAG, 'WebSocket失败: ' + msg)
+          const msg: string = err.message || err.name || 'Connection timeout'
+          hilog.error(0x0000, TAG, 'WebSocket failed: ' + msg)
           reject(new Error(msg))
           return
         }
-        console.info(TAG, 'WebSocket 已连接')
-        this.statusText = '信令已连接，等待配对...'
+        console.info(TAG, 'WebSocket connected')
+        this.statusText = 'Signaling connected, waiting for pairing...'
         resolve(ws)
       })
     })
   }
 
   /**
-   * 通过 WebSocket 发送信令消息
+   * Send signaling message via WebSocket
    */
   sendSignaling(msg: IceCandidateMsg | OfferMsg): void {
     if (this.ws) {
       this.ws.send(JSON.stringify(msg), (err: BusinessError) => {
         if (err) {
-          console.error(TAG, '发送失败:', err.message)
+          console.error(TAG, 'Send failed:', err.message)
         }
       })
     }
   }
 
   /**
-   * 处理信令消息
+   * Handle signaling messages
    */
   async handleSignalingMessage(msg: string): Promise<void> {
     const data: SignalingMsg = JSON.parse(msg) as SignalingMsg
-    console.info(TAG, `[信令] ← ${data.type}`)
+    console.info(TAG, `[Signaling] ← ${data.type}`)
 
     switch (data.type) {
       case 'ready':
-        this.statusText = '配对成功，开始采集屏幕...'
+        this.statusText = 'Pairing successful, starting screen capture...'
         await this.startCapture()
         break
 
@@ -106,7 +107,7 @@ struct ScreenMirror {
           await this.pc.setRemoteDescription(
             new webrtc.RTCSessionDescription({ type: 'answer', sdp: data.sdp })
           )
-          this.statusText = '连接建立中...'
+          this.statusText = 'Establishing connection...'
         }
         break
 
@@ -117,14 +118,14 @@ struct ScreenMirror {
         break
 
       case 'peer-disconnected':
-        this.statusText = '接收端已断开'
+        this.statusText = 'Receiver disconnected'
         this.isCasting = false
         break
     }
   }
 
   /**
-   * 开始屏幕采集 + 投屏
+   * Start screen capture + mirroring
    */
   async startCapture(): Promise<void> {
     try {
@@ -132,7 +133,7 @@ struct ScreenMirror {
         this.factory = new webrtc.PeerConnectionFactory()
       }
 
-      // 屏幕采集
+      // Screen capture
       const mediaDevices = new webrtc.MediaDevices()
       const options: webrtc.DisplayMediaStreamOptions = {
         video: {
@@ -144,10 +145,10 @@ struct ScreenMirror {
       this.localStream = await mediaDevices.getDisplayMedia(options)
 
       const videoTracks = this.localStream.getVideoTracks()
-      hilog.info(0x0000, TAG, '屏幕采集成功，轨数: ' + videoTracks.length)
-      this.statusText = '屏幕采集就绪，创建连接...'
+      hilog.info(0x0000, TAG, 'Screen capture successful, tracks: ' + videoTracks.length)
+      this.statusText = 'Screen capture ready, creating connection...'
 
-      // 创建 PeerConnection — 低延迟配置
+      // Create PeerConnection — low latency config
       const pcConfig: webrtc.RTCConfiguration = {
         iceServers: ICE_SERVERS.iceServers,
         iceTransportPolicy: 'all',
@@ -156,7 +157,7 @@ struct ScreenMirror {
       }
       this.pc = this.factory.createPeerConnection(pcConfig)
 
-      // 添加视频 track — 高码率低延迟编码
+      // Add video track — high bitrate low latency encoding
       for (const track of videoTracks) {
         const sender: webrtc.RTCRtpSender = this.pc.addTrack(track, this.localStream)
         const params: webrtc.RTCRtpSendParameters = sender.getParameters()
@@ -166,10 +167,10 @@ struct ScreenMirror {
           params.encodings[0].scaleResolutionDownBy = 1.0
           sender.setParameters(params)
         }
-        hilog.info(0x0000, TAG, '已添加视频 track: ' + track.kind)
+        hilog.info(0x0000, TAG, 'Added video track: ' + track.kind)
       }
 
-      // ICE 候选事件
+      // ICE candidate event
       this.pc.onicecandidate = (event: webrtc.RTCPeerConnectionIceEvent) => {
         if (event.candidate) {
           const iceMsg: IceCandidateMsg = {
@@ -180,23 +181,23 @@ struct ScreenMirror {
         }
       }
 
-      // 连接状态事件
+      // Connection state event
       this.pc.oniceconnectionstatechange = () => {
         if (this.pc) {
           const state: string = this.pc.iceConnectionState
-          console.info(TAG, 'ICE 状态:', state)
+          console.info(TAG, 'ICE state:', state)
           this.connectionState = state
           if (state === 'connected') {
             this.isCasting = true
-            this.statusText = '投屏中'
+            this.statusText = 'Mirroring'
           } else if (state === 'disconnected' || state === 'failed') {
             this.isCasting = false
-            this.statusText = '连接断开'
+            this.statusText = 'Disconnected'
           }
         }
       }
 
-      // 创建 Offer
+      // Create Offer
       const offer: webrtc.RTCSessionDescriptionInit = await this.pc.createOffer()
       await this.pc.setLocalDescription(offer)
 
@@ -206,51 +207,51 @@ struct ScreenMirror {
       }
       this.sendSignaling(offerMsg)
 
-      this.statusText = '已发送投屏请求，等待接收端响应...'
+      this.statusText = 'Sent mirroring request, waiting for receiver response...'
     } catch (err) {
       const error = err as BusinessError
       const msg: string = error.message || error.name || JSON.stringify(err)
-      hilog.error(0x0000, TAG, '采集失败: ' + msg)
-      this.statusText = '采集失败: ' + msg
+      hilog.error(0x0000, TAG, 'Capture failed: ' + msg)
+      this.statusText = 'Capture failed: ' + msg
     }
   }
 
   /**
-   * 开始投屏按钮
+   * Start mirroring button
    */
   async startMirroring(): Promise<void> {
     try {
-      this.statusText = '连接信令服务器...'
+      this.statusText = 'Connecting to signaling server...'
       this.ws = await this.connectSignaling()
 
       this.ws.on('message', (err: BusinessError, value: string | ArrayBuffer) => {
         if (err) {
-          console.error(TAG, '接收消息错误:', err.message)
+          console.error(TAG, 'Message receiving error:', err.message)
           return
         }
         this.handleSignalingMessage(value as string)
       })
 
       this.ws.on('close', (_err: BusinessError) => {
-        console.info(TAG, '信令断开')
-        this.statusText = '信令已断开'
+        console.info(TAG, 'Signaling disconnected')
+        this.statusText = 'Signaling disconnected'
         this.isCasting = false
       })
 
       this.ws.on('error', (err: BusinessError) => {
-        console.error(TAG, '信令错误:', err.message)
-        this.statusText = `连接失败: ${err.message}`
+        console.error(TAG, 'Signaling error:', err.message || JSON.stringify(err))
+        this.statusText = `Connection failed: ${err.message || err.name || 'Unknown error'}`
       })
     } catch (err) {
       const error = err as BusinessError
       const msg: string = error.message || error.name || JSON.stringify(err)
-      hilog.error(0x0000, TAG, '启动失败: ' + msg)
-      this.statusText = '启动失败: ' + msg
+      hilog.error(0x0000, TAG, 'Start failed: ' + msg)
+      this.statusText = 'Start failed: ' + msg
     }
   }
 
   /**
-   * 停止投屏
+   * Stop mirroring
    */
   stopMirroring(): void {
     try {
@@ -275,12 +276,12 @@ struct ScreenMirror {
       // ignore close errors
     }
     this.isCasting = false
-    this.statusText = '已停止'
+    this.statusText = 'Stopped'
   }
 
   build() {
     Column({ space: 20 }) {
-      Text('屏幕投屏')
+      Text('Screen Mirroring')
         .fontSize(28)
         .fontWeight(FontWeight.Bold)
         .margin({ top: 40 })
@@ -302,7 +303,7 @@ struct ScreenMirror {
 
       if (this.isCasting) {
         Column() {
-          Text('手机画面投屏中')
+          Text('Mobile screen mirroring in progress')
             .fontSize(14)
             .fontColor('#53d769')
         }
@@ -314,7 +315,7 @@ struct ScreenMirror {
       }
 
       if (!this.isCasting) {
-        Button('开始投屏')
+        Button('Start Mirroring')
           .fontSize(18)
           .width('60%')
           .height(48)
@@ -322,7 +323,7 @@ struct ScreenMirror {
           .borderRadius(24)
           .onClick(() => this.startMirroring())
       } else {
-        Button('停止投屏')
+        Button('Stop Mirroring')
           .fontSize(18)
           .width('60%')
           .height(48)
@@ -331,7 +332,7 @@ struct ScreenMirror {
           .onClick(() => this.stopMirroring())
       }
 
-      Text('信令服务器: ' + SIGNALING_URL)
+      Text('Signaling Server: ' + SIGNALING_URL)
         .fontSize(11)
         .fontColor('#666')
         .textAlign(TextAlign.Center)

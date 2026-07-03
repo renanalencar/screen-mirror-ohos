@@ -49,7 +49,7 @@ async function exchangeOffer(caller: webrtc.RTCPeerConnection, callee: webrtc.RT
 }
 
 async function exchangeAnswer(caller: webrtc.RTCPeerConnection, callee: webrtc.RTCPeerConnection) {
-  // 必须先执行caller.setRemoteDescription，否则callee的candidates有可能在caller的remote description设置之前到达
+  // Must call caller.setRemoteDescription first, otherwise callee's candidates might arrive before caller's remote description is set
   const answer = await callee.createAnswer();
   await caller.setRemoteDescription(answer);
   await callee.setLocalDescription(answer);

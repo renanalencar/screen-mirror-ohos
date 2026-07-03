@@ -27,12 +27,12 @@ let caller: webrtc.RTCPeerConnection;
 let callee: webrtc.RTCPeerConnection;
 
 let dataChannel: webrtc.RTCDataChannelInit = {
-  ordered: true, // 设置为 true 表示消息是有序的
-  maxPacketLifeTime: 3000, // 可选，设置数据包的最大生存时间（毫秒）
-  // maxRetransmits: 5, // 可选，设置最大重传次数
-  protocol: "sctp-protocol", // 可选，设置协议
-  // negotiated: false, // 默认为 false，表示数据通道是由 SDP 协商创建的
-  // id: 1, // 可选，设置数据通道 ID
+  ordered: true, // Set to true to indicate messages are ordered
+  maxPacketLifeTime: 3000, // Optional, set the maximum packet life time (milliseconds)
+  // maxRetransmits: 5, // Optional, set maximum number of retransmits
+  protocol: "sctp-protocol", // Optional, set protocol
+  // negotiated: false, // Defaults to false, indicates data channel is created via SDP negotiation
+  // id: 1, // Optional, set data channel ID
 };
 
 async function exchangeOffer(caller: webrtc.RTCPeerConnection, callee: webrtc.RTCPeerConnection) {
@@ -42,7 +42,7 @@ async function exchangeOffer(caller: webrtc.RTCPeerConnection, callee: webrtc.RT
 }
 
 async function exchangeAnswer(caller: webrtc.RTCPeerConnection, callee: webrtc.RTCPeerConnection) {
-  // 必须先执行caller.setRemoteDescription，否则callee的candidates有可能在caller的remote description设置之前到达
+  // Must call caller.setRemoteDescription first, otherwise callee's candidates might arrive before caller's remote description is set
   const answer = await callee.createAnswer();
   await caller.setRemoteDescription(answer);
   await callee.setLocalDescription(answer);
@@ -67,7 +67,7 @@ function exchangeIceCandidates(pc1: webrtc.RTCPeerConnection, pc2: webrtc.RTCPee
   doExchange(pc2, pc1);
 }
 
-// 等待pc.connectionState变为'connected'.
+// Wait for pc.connectionState to become 'connected'.
 async function listenToConnected(pc: webrtc.RTCPeerConnection) {
   while (pc.connectionState != 'connected') {
     await new Promise<webrtc.Event>((resolve) => {
@@ -348,7 +348,7 @@ export default function DataChannelTest() {
       let channel = caller.createDataChannel("sendUnicodeString");
       channel.onopen = () => {
         console.info(TAG, "channel.readyState:", channel.readyState);
-        const unicodeString = "你好";
+        const unicodeString = "Hello";
         channel.send(unicodeString);
       }
       let promise = new Promise<void>((resolve) => {
@@ -356,7 +356,7 @@ export default function DataChannelTest() {
           let receiveDataChannel = event.channel;
           receiveDataChannel.onmessage = (event: webrtc.MessageEvent<String>) => {
             console.info(TAG, "message from caller: ", event.data);
-            expect(event.data).assertEqual("你好");
+            expect(event.data).assertEqual("Hello");
             resolve();
           }
         }

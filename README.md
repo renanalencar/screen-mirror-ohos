@@ -1,107 +1,100 @@
-# ScreenMirror - 手机投屏到 PC
+# ScreenMirror - Screen Mirroring from Mobile to PC
 
-基于 WebRTC 和 OpenHarmony，将手机画面实时投屏到电脑浏览器。
+Real-time screen mirroring from a mobile phone to a PC browser, based on WebRTC and OpenHarmony.
 
-## 功能
+*Note: This project is based on the [harmony-OS-screen-mirror](https://github.com/jm1121985/harmony-OS-screen-mirror) project.*
 
-- 手机屏幕实时采集（通过 getDisplayMedia）
-- H.264 硬件编码，720p/1080p 自适应
-- PC 浏览器接收，支持全屏、撑满、旋转
-- 局域网低延迟（< 200ms）
+## Features
 
-## 架构
+- Real-time mobile screen capture (via getDisplayMedia)
+- H.264 hardware encoding, 720p/1080p adaptive
+- PC browser reception, supporting fullscreen, fill, and rotation
+- Low latency on local network (< 200ms)
+- Robust signaling server with keep-alive heartbeats and automatic dead-session eviction
+
+## Architecture
 
 ```
-手机 (HarmonyOS App) --WebRTC--> PC 浏览器
+Mobile (HarmonyOS App) --WebRTC--> PC Browser
                     |
-              信令服务器 (Node.js WebSocket)
+              Signaling Server (Node.js WebSocket)
 ```
 
-## 依赖
+## Dependencies
 
-### 手机端
+### Mobile
 
 - DevEco Studio 5.0+
 - HarmonyOS SDK API 12+
-- [@ohos/webrtc](https://ohpm.openharmony.cn/#/package/@ohos/webrtc) HAR 包
-- 自行编译 libohos_webrtc.so（见下方说明）
+- [@ohos/webrtc](https://ohpm.openharmony.cn/#/en/detail/@ohos%2Fwebrtc) OHPM package
 
-### 信令服务器
+### Signaling Server
 
 - Node.js 18+
 - npm install ws
 
-### PC 接收端
+### PC Receiver
 
-- Chrome / Edge 浏览器（支持 WebRTC）
+- Chrome / Edge browser (with WebRTC support)
 
-## 快速开始
+## Quick Start
 
-### 1. 编译 WebRTC Native 库
-
-参考 ohos_webrtc 官方文档，需要：
-
-- WSL2 + Ubuntu 22.04
-- OpenHarmony SDK（含 LLVM 工具链）
-- depot_tools
+### 1. Install Dependencies
 
 ```bash
-cd ohos_webrtc
-./build.sh /path/to/ohos-sdk/native
-# 产出 libohos_webrtc.so → 放到 entry/libs/arm64-v8a/
+ohpm install
 ```
 
-### 2. 启动信令服务器和接收端
+### 2. Start Signaling Server and Receiver
 
 ```bash
 cd signaling-server
 npm install
 cd ..
-# 双击 start.bat（或手动 node signaling-server/server.js）
+# Double-click start.bat (or run manually: node signaling-server/server.js)
 ```
 
-### 3. 部署手机 App
+### 3. Deploy Mobile App
 
-1. DevEco Studio 打开本项目
-2. 将编译好的 libohos_webrtc.so 放入 entry/libs/arm64-v8a/
-3. 从 OpenHarmony SDK 复制 libc++_shared.so 到同目录
-4. 签名 → Run 到真机
+1. Open this project in DevEco Studio
+2. Sync the project with Hvigor to fetch OHPM dependencies
+3. Sign → Run on physical device
 
-### 4. 开始投屏
+### 4. Start Mirroring
 
-1. 确保手机和电脑在同一 WiFi
-2. PC 浏览器打开 web-receiver/index.html
-3. 手机打开 App → 点击"开始投屏"
-4. PC 画面出现手机屏幕
+1. Ensure mobile and PC are on the same WiFi
+2. Open web-receiver/index.html in PC browser
+3. Open the App on mobile → Click "Start Mirroring"
+4. The mobile screen will appear on the PC
 
-## 快捷键
+## Shortcuts
 
-| 按键 | 功能 |
+| Key | Function |
 |------|------|
-| F | 全屏切换 |
-| R | 旋转 90° |
-| C | 撑满/自适应切换 |
-| 双击画面 | 全屏 |
+| F | Toggle Fullscreen |
+| R | Rotate 90° |
+| C | Toggle Fill/Adaptive |
+| Double-click video | Fullscreen |
 
-## 文件说明
+## File Description
 
-| 目录 | 说明 |
+| Directory | Description |
 |------|------|
-| entry/ | HarmonyOS App 源码（ArkTS） |
-| signaling-server/ | WebSocket 信令服务器 |
-| web-receiver/ | PC 浏览器接收页面 |
-| start.bat | 一键启动脚本 |
+| entry/ | HarmonyOS App Source Code (ArkTS) |
+| signaling-server/ | WebSocket Signaling Server |
+| web-receiver/ | PC Browser Receiver Page |
+| start.bat | One-click Start Script |
 
-## 截图
+## Screenshots
 
-见 [docs/screenshots/](docs/screenshots/)
+See [docs/screenshots/](docs/screenshots/)
 
-## 开源协议
+## License
 
 MIT License
 
-## 致谢
+## Acknowledgements
 
-- [@ohos/webrtc](https://ohpm.openharmony.cn/#/package/@ohos/webrtc) — OpenHarmony WebRTC SDK
-- Google WebRTC — 底层音视频引擎
-- OpenHarmony — 操作系统平台
+- [@ohos/webrtc](https://ohpm.openharmony.cn/#/en/detail/@ohos%2Fwebrtc) — OpenHarmony WebRTC SDK
+- Google WebRTC — Underlying Audio/Video Engine
+- OpenHarmony — Operating System Platform

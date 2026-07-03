@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\16227\\.ohos\\config\\default_ScreenMirror_gJ5fXg5qUwCY_RjpleF6kAZyHj9xwE8FEIC9I-1Oyq4=.cer",
+          "certpath": "C:\\Users\\renan\\.ohos\\config\\default_harmony-OS-screen-mirror_WvJW6aOrQFBWFxb8Xv5JKMYe6QCLBrmgvkDiFvfvceU=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BA94CB6BC26DB600AB52BE7AE6B681CE854833C6105114A9F63E71E8E0AF4BD24B72591BB428726",
-          "profile": "C:\\Users\\16227\\.ohos\\config\\default_ScreenMirror_gJ5fXg5qUwCY_RjpleF6kAZyHj9xwE8FEIC9I-1Oyq4=.p7b",
+          "keyPassword": "0000001A78ADA03B477AE2AC69F565CDF73C0CC3DF858018AD6517F37FB0CCB0C786EA05866F38295191",
+          "profile": "C:\\Users\\renan\\.ohos\\config\\default_harmony-OS-screen-mirror_WvJW6aOrQFBWFxb8Xv5JKMYe6QCLBrmgvkDiFvfvceU=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\16227\\.ohos\\config\\default_ScreenMirror_gJ5fXg5qUwCY_RjpleF6kAZyHj9xwE8FEIC9I-1Oyq4=.p12",
-          "storePassword": "0000001B368A5970AB0418A59BC933028BE1B3F5E3959F72EEE729B1B7B7B65B9AD1698AC5081671FF4AD7"
+          "storeFile": "C:\\Users\\renan\\.ohos\\config\\default_harmony-OS-screen-mirror_WvJW6aOrQFBWFxb8Xv5JKMYe6QCLBrmgvkDiFvfvceU=.p12",
+          "storePassword": "0000001A58DC31BB7352C355CC95F7B95FCE4FC49E0476C7856174209A909D94243B93A798A7C7E2EC2D"
         }
       }
     ],
@@ -21,7 +21,7 @@
         'signingConfig': 'default',
         'compatibleSdkVersion': '5.0.0(12)',
         'runtimeOS': 'HarmonyOS',
-        'targetSdkVersion': '5.0.0(12)'
+        'targetSdkVersion': '6.1.0(23)'
       }
     ]
   },

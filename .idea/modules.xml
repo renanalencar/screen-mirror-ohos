@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ScreenMirror.iml" filepath="$PROJECT_DIR$/.idea/modules/ScreenMirror.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/entry.iml" filepath="$PROJECT_DIR$/.idea/modules/entry.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/harmony-OS-screen-mirror.iml" filepath="$PROJECT_DIR$/.idea/modules/harmony-OS-screen-mirror.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ohos_webrtc.iml" filepath="$PROJECT_DIR$/.idea/modules/ohos_webrtc.iml" />
     </modules>
   </component>

@@ -1,0 +1,3 @@
+C:\Users\renan\source\repos\harmony-OS-screen-mirror\ohos_webrtc\Index.ets
+C:\Users\renan\source\repos\harmony-OS-screen-mirror\ohos_webrtc\src\main\ets\log\Logging.ets
+C:\Users\renan\source\repos\harmony-OS-screen-mirror\ohos_webrtc\src\main\ets\xcomponent\VideoRenderController.ets

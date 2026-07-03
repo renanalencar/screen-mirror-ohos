@@ -1,5 +1,8 @@
 {
   "string": [
-    { "name": "EntryAbility_label", "value": "投屏" }
+    {
+      "name": "EntryAbility_label",
+      "value": "Screen Mirroring"
+    }
   ]
 }

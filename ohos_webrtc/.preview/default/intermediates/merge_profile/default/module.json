@@ -1,0 +1,42 @@
+{
+	"app": {
+		"bundleName": "com.example.screenmirror",
+		"debug": true,
+		"versionCode": 1000000,
+		"versionName": "1.0.0",
+		"minAPIVersion": 50000012,
+		"targetAPIVersion": 50000012,
+		"apiReleaseType": "Release",
+		"targetMinorAPIVersion": 0,
+		"targetPatchAPIVersion": 0,
+		"compileSdkVersion": "6.1.1.125",
+		"compileSdkType": "HarmonyOS",
+		"appEnvironments": [],
+		"bundleType": "app",
+		"buildMode": "debug"
+	},
+	"module": {
+		"name": "ohos_webrtc",
+		"type": "har",
+		"deviceTypes": [
+			"default",
+			"tablet"
+		],
+		"requestPermissions": [
+			{
+				"name": "ohos.permission.INTERNET",
+				"reason": "$string:internet"
+			},
+			{
+				"name": "ohos.permission.CAMERA",
+				"reason": "$string:camera"
+			},
+			{
+				"name": "ohos.permission.MICROPHONE",
+				"reason": "$string:microphone"
+			}
+		],
+		"packageName": "@ohos/webrtc",
+		"installationFree": false
+	}
+}

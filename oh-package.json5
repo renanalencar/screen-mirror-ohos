@@ -1,6 +1,8 @@
 {
-  "modelVersion": "5.0.0",
+  "modelVersion": "6.1.0",
   "dependencies": {
-    "ohos_webrtc": "file:./ohos_webrtc"
-  }
+    "@ohos/webrtc": "^1.0.2"
+  },
+  "devDependencies": {},
+  "dynamicDependencies": {}
 }
