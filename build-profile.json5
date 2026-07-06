@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/rca/.ohos/config/default_ohos-screen-mirror_t9r1JuObl2bKRS8LTMZrfIxQii45AA0GxM-w4ZJSf-c=.cer",
+          "certpath": "/Users/rca3/.ohos/config/default_ohos-screen-mirror__gygbAE7JyxLPl249elIEpOEcOgaU3YaYyePluVoD4k=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BF0A06F4167DAF000BC2D62FE55D7C6A685ABA695CFD8ABEEAC4EC167D610A1D61E246341602988",
-          "profile": "/Users/rca/.ohos/config/default_ohos-screen-mirror_t9r1JuObl2bKRS8LTMZrfIxQii45AA0GxM-w4ZJSf-c=.p7b",
+          "keyPassword": "0000001BE6313CFFF7F46E01E226EC22E585FD50E41A547BBE42643446621B1E09B7988EBE2AE4928FB050",
+          "profile": "/Users/rca3/.ohos/config/default_ohos-screen-mirror__gygbAE7JyxLPl249elIEpOEcOgaU3YaYyePluVoD4k=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/rca/.ohos/config/default_ohos-screen-mirror_t9r1JuObl2bKRS8LTMZrfIxQii45AA0GxM-w4ZJSf-c=.p12",
-          "storePassword": "0000001BAA5B69423D246456B19D08978E330756E894C439E0957FE1FEE0E579173A4EDC8A142200323B0F"
+          "storeFile": "/Users/rca3/.ohos/config/default_ohos-screen-mirror__gygbAE7JyxLPl249elIEpOEcOgaU3YaYyePluVoD4k=.p12",
+          "storePassword": "0000001B029E75F822F827E57FC94EF8A52DCC2D37A3AE12C2C417BEA283C84DB099735B8A3D9CBE2CC1E4"
         }
       }
     ],

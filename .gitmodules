@@ -1,0 +1,7 @@
+[submodule "web-receiver"]
+	path = web-receiver
+	url = git@github.com:renanalencar/screen-mirror-receiver.git
+
+[submodule "signaling-server"]
+	path = signaling-server
+	url = git@github.com:renanalencar/screen-mirror-signaling-server.git

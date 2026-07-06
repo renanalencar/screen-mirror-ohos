@@ -48,10 +48,16 @@ ohpm install
 ### 2. Start Signaling Server and Receiver
 
 ```bash
+# Initialize submodules (if not already present)
+git submodule sync
+git submodule update --init --recursive
+
 cd signaling-server
 npm install
 cd ..
-# Double-click start.bat (or run manually: node signaling-server/server.js)
+# Start the signaling server:
+node signaling-server/server.js
+# Or use start.bat on Windows
 ```
 
 ### 3. Deploy Mobile App
@@ -84,6 +90,21 @@ cd ..
 | signaling-server/ | WebSocket Signaling Server |
 | web-receiver/ | PC Browser Receiver Page |
 | start.bat | One-click Start Script |
+
+Note: `signaling-server/` and `web-receiver/` are now configured as git submodules. If this repository previously contained copies of those folders, they were backed up to `signaling-server.orig/` and `web-receiver.orig/`.
+
+## Start Script
+
+A convenience script is provided to initialize submodules, back up any existing non-submodule folders, install the signaling server dependencies, and run the server.
+
+Run the script on macOS/Linux:
+
+```bash
+chmod +x scripts/start-submodules-and-server.sh
+./scripts/start-submodules-and-server.sh
+```
+
+The script is located at [scripts/start-submodules-and-server.sh](scripts/start-submodules-and-server.sh).
 
 ## Screenshots
 

@@ -61,18 +61,56 @@ struct ScreenMirror {
 
   /**
    * Build the signaling WebSocket URL from the user-entered host.
-   * Accepts a bare host ("192.168.0.131") or "host:port"; falls back to the
-   * default host/port when the field is left blank.
+   * Accepts a bare host ("192.168.0.131"), "host:port", a full URL,
+   * or public hostnames such as "screen-mirror-backend.onrender.com".
+   * Local/private hosts default to ws:// and port 8080; public hosts default
+   * to wss:// and no extra port.
    */
   buildSignalingUrl(): string {
-    let host: string = this.signalingHost.trim()
-    if (host.length === 0) {
-      host = DEFAULT_SIGNALING_HOST
+    let rawValue: string = this.signalingHost.trim()
+    if (rawValue.length === 0) {
+      rawValue = DEFAULT_SIGNALING_HOST
     }
-    // Only append the default port when the user didn't specify their own.
-    const hasPort: boolean = host.indexOf(':') >= 0
-    const authority: string = hasPort ? host : `${host}:${DEFAULT_SIGNALING_PORT}`
-    return `ws://${authority}/?role=sender`
+
+    const hasProtocol: boolean = rawValue.indexOf('://') >= 0
+    if (hasProtocol) {
+      const normalizedValue: string = rawValue.endsWith('/') ? rawValue : `${rawValue}/`
+      if (normalizedValue.indexOf('?') < 0) {
+        return `${normalizedValue}?role=sender`
+      }
+      return normalizedValue
+    }
+
+    let authority: string = rawValue
+    let scheme: string = 'ws'
+    let path: string = '/?role=sender'
+
+    const pathIndex: number = rawValue.indexOf('/')
+    if (pathIndex >= 0) {
+      authority = rawValue.substring(0, pathIndex)
+      path = rawValue.substring(pathIndex)
+      if (path.indexOf('?') < 0) {
+        path = `${path}${path.endsWith('/') ? '' : '/'}?role=sender`
+      }
+    }
+
+    const lowerAuthority: string = authority.toLowerCase()
+    const isLocalHost: boolean = lowerAuthority === 'localhost' ||
+      lowerAuthority.startsWith('127.') ||
+      lowerAuthority.startsWith('10.') ||
+      lowerAuthority.startsWith('192.168.') ||
+      lowerAuthority.startsWith('172.')
+
+    const hasExplicitPort: boolean = authority.lastIndexOf(':') > authority.lastIndexOf(']') &&
+      authority.substring(authority.lastIndexOf(':') + 1).length > 0
+
+    if (!isLocalHost && authority.indexOf('.') >= 0 && !hasExplicitPort) {
+      scheme = 'wss'
+    } else if (!hasExplicitPort) {
+      authority = `${authority}:${DEFAULT_SIGNALING_PORT}`
+    }
+
+    return `${scheme}://${authority}${path}`
   }
 
   /**
