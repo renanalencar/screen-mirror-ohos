@@ -13,9 +13,11 @@ import hilog from '@ohos.hilog'
 
 const TAG = 'ScreenMirror'
 
-// ====== Replace with your PC's local IP (192.168.x.x) ======
-// const SIGNALING_URL = 'ws://[IP_ADDRESS]'
-const SIGNALING_URL = 'ws://192.168.0.131:8080/?role=sender'
+// ====== Signaling server defaults ======
+// The user can override the host at runtime in the app. A bare host uses this
+// default port; a "host:port" value overrides it.
+const DEFAULT_SIGNALING_HOST = '192.168.0.131'
+const DEFAULT_SIGNALING_PORT = 8080
 
 // ====== Signaling message type definition ======
 interface SignalingMsg {
@@ -46,6 +48,7 @@ struct ScreenMirror {
   @State statusText: string = 'Not Connected'
   @State isCasting: boolean = false
   @State connectionState: string = ''
+  @State signalingHost: string = DEFAULT_SIGNALING_HOST
 
   private factory: webrtc.PeerConnectionFactory | null = null
   private pc: webrtc.RTCPeerConnection | null = null
@@ -57,12 +60,30 @@ struct ScreenMirror {
   }
 
   /**
+   * Build the signaling WebSocket URL from the user-entered host.
+   * Accepts a bare host ("192.168.0.131") or "host:port"; falls back to the
+   * default host/port when the field is left blank.
+   */
+  buildSignalingUrl(): string {
+    let host: string = this.signalingHost.trim()
+    if (host.length === 0) {
+      host = DEFAULT_SIGNALING_HOST
+    }
+    // Only append the default port when the user didn't specify their own.
+    const hasPort: boolean = host.indexOf(':') >= 0
+    const authority: string = hasPort ? host : `${host}:${DEFAULT_SIGNALING_PORT}`
+    return `ws://${authority}/?role=sender`
+  }
+
+  /**
    * Establish WebSocket signaling connection
    */
   async connectSignaling(): Promise<webSocket.WebSocket> {
     return new Promise((resolve, reject) => {
       const ws = webSocket.createWebSocket()
-      ws.connect(SIGNALING_URL, (err: BusinessError, value: boolean) => {
+      const url: string = this.buildSignalingUrl()
+      hilog.info(0x0000, TAG, 'Connecting to ' + url)
+      ws.connect(url, (err: BusinessError, value: boolean) => {
         if (err) {
           const msg: string = err.message || err.name || 'Connection timeout'
           hilog.error(0x0000, TAG, 'WebSocket failed: ' + msg)
@@ -316,6 +337,27 @@ struct ScreenMirror {
       }
 
       if (!this.isCasting) {
+        Column({ space: 6 }) {
+          Text('Signaling Server IP')
+            .fontSize(13)
+            .fontColor($r('app.color.text_secondary'))
+            .width('80%')
+            .textAlign(TextAlign.Start)
+
+          TextInput({ text: this.signalingHost, placeholder: DEFAULT_SIGNALING_HOST })
+            .type(InputType.Normal)
+            .fontSize(16)
+            .fontColor($r('app.color.text_primary'))
+            .width('80%')
+            .height(48)
+            .backgroundColor($r('app.color.surface'))
+            .borderRadius(8)
+            .onChange((value: string) => {
+              this.signalingHost = value
+            })
+        }
+        .alignItems(HorizontalAlign.Start)
+
         Button('Start Mirroring')
           .fontSize(18)
           .fontColor(Color.White)
@@ -335,7 +377,7 @@ struct ScreenMirror {
           .onClick(() => this.stopMirroring())
       }
 
-      Text('Signaling Server: ' + SIGNALING_URL)
+      Text('Signaling Server: ' + this.buildSignalingUrl())
         .fontSize(11)
         .fontColor($r('app.color.text_tertiary'))
         .textAlign(TextAlign.Center)

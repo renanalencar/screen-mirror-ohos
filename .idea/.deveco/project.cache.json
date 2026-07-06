@@ -9,7 +9,7 @@
 		"SELECT_BUILD_PRODUCT":"default",
 		"BUNDLE_NAME":"br.com.renanalencar.screenmirror",
 		"BUILD_PATH":{
-			"OUTPUT_PATH":"/Users/rca/source/repos/ohos-screen-mirror/build/outputs/default"
+			"OUTPUT_PATH":"/Users/rca3/source/repos/ohos-screen-mirror/build/outputs/default"
 		},
 		"SELECT_BUILD_MODE":""
 	}

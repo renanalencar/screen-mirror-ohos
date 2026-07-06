@@ -8,3 +8,4 @@ local.properties
 .hvigor/
 oh_modules/
 libs/
+signaling-server/.env
