@@ -1,4 +1,5 @@
 import AbilityConstant from '@ohos.app.ability.AbilityConstant';
+import ConfigurationConstant from '@ohos.app.ability.ConfigurationConstant';
 import hilog from '@ohos.hilog';
 import UIAbility from '@ohos.app.ability.UIAbility';
 import Want from '@ohos.app.ability.Want';
@@ -7,6 +8,10 @@ import window from '@ohos.window';
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'ScreenMirror', 'Ability onCreate');
+    // Follow the device's system color theme (light/dark). With NOT_SET the
+    // system picks the matching resource qualifier (base vs. dark) automatically.
+    this.context.getApplicationContext()
+      .setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
   }
 
   onDestroy(): void {

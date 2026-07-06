@@ -1,5 +1,14 @@
 {
   "color": [
-    { "name": "start_window_background", "value": "#1a1a2e" }
+    { "name": "start_window_background", "value": "#f2f3f7" },
+    { "name": "page_background", "value": "#f2f3f7" },
+    { "name": "surface", "value": "#ffffff" },
+    { "name": "accent", "value": "#0a6cff" },
+    { "name": "danger", "value": "#d93636" },
+    { "name": "text_primary", "value": "#1a1a2e" },
+    { "name": "text_secondary", "value": "#5a5a6a" },
+    { "name": "text_tertiary", "value": "#9a9aa5" },
+    { "name": "success", "value": "#1e9e4a" },
+    { "name": "warning", "value": "#b8860b" }
   ]
 }

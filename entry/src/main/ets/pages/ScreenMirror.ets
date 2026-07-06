@@ -284,32 +284,33 @@ struct ScreenMirror {
       Text('Screen Mirroring')
         .fontSize(28)
         .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
         .margin({ top: 40 })
 
       Text(this.statusText)
         .fontSize(18)
-        .fontColor(this.isCasting ? '#53d769' : '#ffc107')
+        .fontColor(this.isCasting ? $r('app.color.success') : $r('app.color.warning'))
         .textAlign(TextAlign.Center)
         .width('80%')
         .padding(10)
-        .backgroundColor('#16213e')
+        .backgroundColor($r('app.color.surface'))
         .borderRadius(8)
 
       if (this.connectionState) {
         Text('ICE: ' + this.connectionState)
           .fontSize(12)
-          .fontColor('#888')
+          .fontColor($r('app.color.text_secondary'))
       }
 
       if (this.isCasting) {
         Column() {
           Text('Mobile screen mirroring in progress')
             .fontSize(14)
-            .fontColor('#53d769')
+            .fontColor($r('app.color.success'))
         }
         .width('80%')
         .height(160)
-        .backgroundColor('#16213e')
+        .backgroundColor($r('app.color.surface'))
         .borderRadius(12)
         .justifyContent(FlexAlign.Center)
       }
@@ -317,30 +318,32 @@ struct ScreenMirror {
       if (!this.isCasting) {
         Button('Start Mirroring')
           .fontSize(18)
+          .fontColor(Color.White)
           .width('60%')
           .height(48)
-          .backgroundColor('#0f3460')
+          .backgroundColor($r('app.color.accent'))
           .borderRadius(24)
           .onClick(() => this.startMirroring())
       } else {
         Button('Stop Mirroring')
           .fontSize(18)
+          .fontColor(Color.White)
           .width('60%')
           .height(48)
-          .backgroundColor('#c0392b')
+          .backgroundColor($r('app.color.danger'))
           .borderRadius(24)
           .onClick(() => this.stopMirroring())
       }
 
       Text('Signaling Server: ' + SIGNALING_URL)
         .fontSize(11)
-        .fontColor('#666')
+        .fontColor($r('app.color.text_tertiary'))
         .textAlign(TextAlign.Center)
         .margin({ bottom: 30 })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#1a1a2e')
+    .backgroundColor($r('app.color.page_background'))
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
   }
