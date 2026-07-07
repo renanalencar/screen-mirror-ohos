@@ -10,13 +10,16 @@ import webrtc from '@ohos/webrtc'
 import webSocket from '@ohos.net.webSocket'
 import { BusinessError } from '@ohos.base'
 import hilog from '@ohos.hilog'
+import preferences from '@ohos.data.preferences'
 
 const TAG = 'ScreenMirror'
+const SIGNALING_HOST_KEY = 'signalingHost'
+const PREFERENCES_NAME = 'screen_mirror_prefs'
 
 // ====== Signaling server defaults ======
 // The user can override the host at runtime in the app. A bare host uses this
 // default port; a "host:port" value overrides it.
-const DEFAULT_SIGNALING_HOST = '192.168.0.131'
+const DEFAULT_SIGNALING_HOST = 'screen-mirror-backend.onrender.com'
 const DEFAULT_SIGNALING_PORT = 8080
 
 // ====== Signaling message type definition ======
@@ -49,14 +52,69 @@ struct ScreenMirror {
   @State isCasting: boolean = false
   @State connectionState: string = ''
   @State signalingHost: string = DEFAULT_SIGNALING_HOST
+  @State showSettings: boolean = false
+  @State settingsInput: string = ''
 
   private factory: webrtc.PeerConnectionFactory | null = null
   private pc: webrtc.RTCPeerConnection | null = null
   private ws: webSocket.WebSocket | null = null
   private localStream: webrtc.MediaStream | null = null
+  private preferencesObj: preferences.Preferences | null = null
+
+  /**
+   * Load saved signaling host from preferences
+   */
+  loadSettings(): void {
+    try {
+      preferences.getPreferences(AppStorage.Get('context'), PREFERENCES_NAME).then((prefs: preferences.Preferences) => {
+        this.preferencesObj = prefs
+        const savedHost = this.preferencesObj?.getSync(SIGNALING_HOST_KEY, DEFAULT_SIGNALING_HOST) as string
+        this.signalingHost = savedHost
+        this.settingsInput = savedHost
+        hilog.info(0x0000, TAG, `Loaded saved signaling host: ${savedHost}`)
+      }).catch((err: BusinessError) => {
+        hilog.warn(0x0000, TAG, `Failed to load preferences: ${err.message}`)
+        this.signalingHost = DEFAULT_SIGNALING_HOST
+        this.settingsInput = DEFAULT_SIGNALING_HOST
+      })
+    } catch (err) {
+      const error = err as BusinessError
+      hilog.warn(0x0000, TAG, `Failed to load preferences: ${error.message}`)
+      this.signalingHost = DEFAULT_SIGNALING_HOST
+      this.settingsInput = DEFAULT_SIGNALING_HOST
+    }
+  }
+
+  /**
+   * Save signaling host to preferences
+   */
+  saveSettings(): void {
+    try {
+      if (!this.preferencesObj) {
+        preferences.getPreferences(AppStorage.Get('context'), PREFERENCES_NAME).then((prefs: preferences.Preferences) => {
+          this.preferencesObj = prefs
+          this.preferencesObj?.putSync(SIGNALING_HOST_KEY, this.settingsInput)
+          this.preferencesObj?.flush()
+          this.signalingHost = this.settingsInput
+          hilog.info(0x0000, TAG, `Saved signaling host: ${this.settingsInput}`)
+        }).catch((err: BusinessError) => {
+          hilog.error(0x0000, TAG, `Failed to save preferences: ${err.message}`)
+        })
+      } else {
+        this.preferencesObj.putSync(SIGNALING_HOST_KEY, this.settingsInput)
+        this.preferencesObj.flush()
+        this.signalingHost = this.settingsInput
+        hilog.info(0x0000, TAG, `Saved signaling host: ${this.settingsInput}`)
+      }
+    } catch (err) {
+      const error = err as BusinessError
+      hilog.error(0x0000, TAG, `Failed to save preferences: ${error.message}`)
+    }
+  }
 
   aboutToAppear(): void {
     hilog.info(0x0000, TAG, 'Page initialized')
+    this.loadSettings()
   }
 
   /**
@@ -340,62 +398,26 @@ struct ScreenMirror {
 
   build() {
     Column({ space: 20 }) {
-      Text('Screen Mirroring')
-        .fontSize(28)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ top: 40 })
-
-      Text(this.statusText)
-        .fontSize(18)
-        .fontColor(this.isCasting ? $r('app.color.success') : $r('app.color.warning'))
-        .textAlign(TextAlign.Center)
-        .width('80%')
-        .padding(10)
-        .backgroundColor($r('app.color.surface'))
-        .borderRadius(8)
-
-      if (this.connectionState) {
-        Text('ICE: ' + this.connectionState)
-          .fontSize(12)
-          .fontColor($r('app.color.text_secondary'))
+      // Header with title and settings icon
+      Row() {
+        Text('Screen Mirroring')
+          .fontSize(28)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
       }
+      .alignItems(VerticalAlign.Center)
+      .margin({ top: 40 })
 
-      if (this.isCasting) {
-        Column() {
-          Text('Mobile screen mirroring in progress')
-            .fontSize(14)
-            .fontColor($r('app.color.success'))
-        }
-        .width('80%')
-        .height(160)
-        .backgroundColor($r('app.color.surface'))
-        .borderRadius(12)
-        .justifyContent(FlexAlign.Center)
-      }
+      // Text(this.statusText)
+      //   .fontSize(18)
+      //   .fontColor(this.isCasting ? $r('app.color.success') : $r('app.color.warning'))
+      //   .textAlign(TextAlign.Center)
+      //   .width('80%')
+      //   .padding(10)
+      //   .backgroundColor($r('app.color.surface'))
+      //   .borderRadius(8)
 
       if (!this.isCasting) {
-        Column({ space: 6 }) {
-          Text('Signaling Server IP')
-            .fontSize(13)
-            .fontColor($r('app.color.text_secondary'))
-            .width('80%')
-            .textAlign(TextAlign.Start)
-
-          TextInput({ text: this.signalingHost, placeholder: DEFAULT_SIGNALING_HOST })
-            .type(InputType.Normal)
-            .fontSize(16)
-            .fontColor($r('app.color.text_primary'))
-            .width('80%')
-            .height(48)
-            .backgroundColor($r('app.color.surface'))
-            .borderRadius(8)
-            .onChange((value: string) => {
-              this.signalingHost = value
-            })
-        }
-        .alignItems(HorizontalAlign.Start)
-
         Button('Start Mirroring')
           .fontSize(18)
           .fontColor(Color.White)
@@ -415,16 +437,154 @@ struct ScreenMirror {
           .onClick(() => this.stopMirroring())
       }
 
-      Text('Signaling Server: ' + this.buildSignalingUrl())
+      Button({ type: ButtonType.Circle, stateEffect: true }) {
+        SymbolGlyph($r('sys.symbol.gearshape'))
+          .fontSize(22)
+          .renderingStrategy(SymbolRenderingStrategy.SINGLE)
+          .fontColor([$r('sys.color.brand')])
+      }
+      .width(48)
+      .height(48)
+      .backgroundColor($r('app.color.surface'))
+      .onClick(() => {
+        this.settingsInput = this.signalingHost
+        this.showSettings = true
+      })
+
+      Text(this.statusText)
         .fontSize(11)
         .fontColor($r('app.color.text_tertiary'))
         .textAlign(TextAlign.Center)
         .margin({ bottom: 30 })
+
+      if (this.connectionState) {
+        Text('ICE: ' + this.connectionState)
+          .fontSize(12)
+          .fontColor($r('app.color.text_secondary'))
+      }
+
+      if (this.isCasting) {
+        Column() {
+          Text('Mobile screen mirroring in progress')
+            .fontSize(14)
+            .fontColor($r('app.color.success'))
+        }
+        .width('80%')
+        .height(160)
+        .backgroundColor($r('app.color.surface'))
+        .borderRadius(12)
+        .justifyContent(FlexAlign.Center)
+      }
     }
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.page_background'))
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
+    .bindSheet($$this.showSettings, this.settingsSheet(), {
+      height: '50%',
+      dragBar: true,
+      onDisappear: () => {
+        this.showSettings = false
+      }
+    })
+  }
+
+  /**
+   * Settings Bottom Sheet
+   */
+  @Builder settingsSheet() {
+    Column({ space: 16 }) {
+      // Header
+      Row() {
+        Text('Settings')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
+
+        Blank()
+
+        Button({ type: ButtonType.Circle, stateEffect: true })
+        .width(40)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          this.showSettings = false
+        })
+      }
+      .width('90%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .alignItems(VerticalAlign.Center)
+      .padding({ top: 16 })
+
+      Divider()
+        .width('90%')
+
+      // Signaling Server Input
+      Column({ space: 8 }) {
+        Text('Signaling Server Address')
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .width('90%')
+          .textAlign(TextAlign.Start)
+
+        Text('Enter IP, hostname, or full WebSocket URL')
+          .fontSize(12)
+          .fontColor($r('app.color.text_secondary'))
+          .width('90%')
+          .textAlign(TextAlign.Start)
+
+        TextInput({ text: this.settingsInput, placeholder: 'e.g., 192.168.0.131' })
+          .type(InputType.Normal)
+          .fontSize(16)
+          .fontColor($r('app.color.text_primary'))
+          .width('90%')
+          .height(48)
+          .backgroundColor($r('app.color.surface'))
+          .borderRadius(8)
+          .padding({ left: 12, right: 12 })
+          .onChange((value: string) => {
+            this.settingsInput = value
+          })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+      .padding({ left: 16 })
+
+      Blank()
+
+      // Action Buttons
+      Row({ space: 12 }) {
+        Button('Cancel')
+          .fontSize(16)
+          .fontColor($r('app.color.text_primary'))
+          .width('48%')
+          .height(44)
+          .backgroundColor($r('app.color.surface'))
+          .borderRadius(8)
+          .onClick(() => {
+            this.showSettings = false
+          })
+
+        Button('Save')
+          .fontSize(16)
+          .fontColor(Color.White)
+          .width('48%')
+          .height(44)
+          .backgroundColor($r('app.color.accent'))
+          .borderRadius(8)
+          .onClick(() => {
+            this.saveSettings()
+            this.showSettings = false
+          })
+      }
+      .width('90%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ bottom: 16 })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Center)
+    .backgroundColor($r('app.color.page_background'))
   }
 }

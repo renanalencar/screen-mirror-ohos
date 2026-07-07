@@ -1,3 +1,6 @@
+pkg_modules/.ohpm/@ohos+webrtc@1.0.2/pkg_modules/@ohos/webrtc:pkg_modules/.ohpm/@ohos+webrtc@1.0.2/pkg_modules/@ohos/webrtc/Index
+pkg_modules/@ohos/webrtc:pkg_modules/.ohpm/@ohos+webrtc@1.0.2/pkg_modules/@ohos/webrtc
+pkg_modules@entry/@ohos/webrtc:pkg_modules/.ohpm/@ohos+webrtc@1.0.2/pkg_modules/@ohos/webrtc
 @system.app:@native.system.app
 @ohos.app:@native.ohos.app
 @system.router:@native.system.router

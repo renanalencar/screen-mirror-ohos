@@ -20,6 +20,8 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
     hilog.info(0x0000, 'ScreenMirror', 'Ability onWindowStageCreate');
+    // Store context in AppStorage for preferences access
+    AppStorage.setOrCreate('context', this.context);
     windowStage.loadContent('pages/ScreenMirror', (err) => {
       if (err.code) {
         hilog.error(0x0000, 'ScreenMirror', 'Failed to load content: %{public}s', JSON.stringify(err));

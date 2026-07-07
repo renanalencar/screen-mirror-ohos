@@ -4,6 +4,16 @@ string camera 0x01000005
 string internet 0x01000006
 string microphone 0x01000007
 string page_show 0x01000008
+color accent 0x01000009
+color danger 0x0100000a
+color page_background 0x0100000b
 color start_window_background 0x01000004
+color success 0x0100000c
+color surface 0x0100000d
+color text_primary 0x0100000e
+color text_secondary 0x0100000f
+color text_tertiary 0x01000010
+color warning 0x01000011
 media app_icon 0x01000000
+media startIcon 0x01000012
 profile main_pages 0x01000002

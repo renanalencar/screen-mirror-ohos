@@ -1,11 +1,11 @@
 {
   "modulePathMap": {
-    "entry": "C:\\Users\\renan\\source\\repos\\harmony-OS-screen-mirror\\entry",
-    "ohos_webrtc": "C:\\Users\\renan\\source\\repos\\harmony-OS-screen-mirror\\ohos_webrtc"
+    "entry": "/Users/rca3/source/repos/ohos-screen-mirror/entry",
+    "ohos_webrtc": "/Users/rca3/source/repos/ohos-screen-mirror/ohos_webrtc"
   },
   "compileMode": "esmodule",
-  "projectRootPath": "C:\\Users\\renan\\source\\repos\\harmony-OS-screen-mirror",
-  "nodeModulesPath": "C:\\Users\\renan\\source\\repos\\harmony-OS-screen-mirror\\entry\\.preview\\default\\intermediates\\loader_out\\default\\node_modules",
+  "projectRootPath": "/Users/rca3/source/repos/ohos-screen-mirror",
+  "nodeModulesPath": "/Users/rca3/source/repos/ohos-screen-mirror/entry/.preview/default/intermediates/loader_out/default/node_modules",
   "byteCodeHarInfo": {},
   "declarationEntry": [],
   "moduleName": "entry",
@@ -19,7 +19,7 @@
   "hspResourcesMap": {},
   "updateVersionInfo": {},
   "customizedHar": false,
-  "anBuildOutPut": "C:\\Users\\renan\\source\\repos\\harmony-OS-screen-mirror\\entry\\.preview\\default\\intermediates\\loader_out\\default\\an\\arm64-v8a",
+  "anBuildOutPut": "/Users/rca3/source/repos/ohos-screen-mirror/entry/.preview/default/intermediates/loader_out/default/an/arm64-v8a",
   "anBuildMode": "type",
-  "buildConfigPath": ".preview\\config\\buildConfig.json"
+  "buildConfigPath": ".preview/config/buildConfig.json"
 }
